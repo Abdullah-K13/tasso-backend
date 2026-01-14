@@ -1,0 +1,34 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Virtual environment
+venv
+env
+ENV
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
