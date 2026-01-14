@@ -154,8 +154,8 @@ async def jotform_webhook(request: Request):
         if not patient_payload["firstName"] or not patient_payload["lastName"]:
             raise ValueError("Missing patient name")
 
-        # token = get_tasso_token()
-        # tasso_patient = create_tasso_patient(token, patient_payload)
+        token = get_tasso_token()
+        tasso_patient = create_tasso_patient(token, patient_payload)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
