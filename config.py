@@ -1,0 +1,7 @@
+import os
+
+TASSO_BASE_URL = os.getenv("TASSO_BASE_URL")  # sandbox or prod
+TASSO_USERNAME = os.getenv("TASSO_USERNAME")
+TASSO_SECRET = os.getenv("TASSO_SECRET")
+
+JOTFORM_WEBHOOK_SECRET = os.getenv("JOTFORM_WEBHOOK_SECRET")
