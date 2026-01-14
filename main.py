@@ -120,45 +120,47 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 #         "status": "success",
 #         "tasso_patient_id": tasso_patient["results"]["id"]
 #     }
-
 @app.post("/webhooks/jotform/tasso")
-async def jotform_webhook(
-    first_name: str = Form(...),
-    last_name: str = Form(...),
-    dob: str = Form(...),
-    sex: str = Form(None),
-    email: str = Form(...),
-    phone: str = Form(...),
-    address_line1: str = Form(...),
-    address_line2: str = Form(None),
-    city: str = Form(...),
-    state: str = Form(...),
-    zip: str = Form(...),
-    webhook_secret: str = Form(None)
-):
+async def jotform_webhook(request: Request):
+    form = await request.form()
+    print(form)
+
+    # Optional secret check
+    webhook_secret = form.get("webhook_secret")
     if JOTFORM_WEBHOOK_SECRET and webhook_secret != JOTFORM_WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized webhook")
 
-    patient_payload = {
-        "firstName": first_name,
-        "lastName": last_name,
-        "dob": dob,
-        "sexAtBirth": sex or "unknown",
-        "contact": {"email": email, "phone": phone},
-        "address": {
-            "line1": address_line1,
-            "line2": address_line2,
-            "city": city,
-            "state": state,
-            "postalCode": zip,
-            "country": "US",
-        },
+    try:
+        patient_payload = {
+            "firstName": form.get("first_name") or form.get("q3_name[first]"),
+            "lastName": form.get("last_name") or form.get("q3_name[last]"),
+            "dob": form.get("dob") or form.get("q10_dob"),
+            "sexAtBirth": form.get("sex") or "unknown",
+            "contact": {
+                "email": form.get("email") or form.get("q5_email"),
+                "phone": form.get("phone") or form.get("q7_phoneNumber"),
+            },
+            "address": {
+                "line1": form.get("address_line1") or form.get("q8_address[addr_line1]"),
+                "line2": form.get("address_line2"),
+                "city": form.get("city") or form.get("q8_address[city]"),
+                "state": form.get("state") or form.get("q8_address[state]"),
+                "postalCode": form.get("zip") or form.get("q8_address[postal]"),
+                "country": "US",
+            },
+        }
+
+        # Validate critical fields
+        if not patient_payload["firstName"] or not patient_payload["lastName"]:
+            raise ValueError("Missing patient name")
+
+        # token = get_tasso_token()
+        # tasso_patient = create_tasso_patient(token, patient_payload)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "status": "success",
+        "tasso_patient_id": tasso_patient["results"]["id"]
     }
-
-    # try:
-    #     token = get_tasso_token()
-    #     tasso_patient = create_tasso_patient(token, patient_payload)
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail=str(e))
-
-    return {"status": "success", "tasso_patient_id": tasso_patient["results"]["id"]}
