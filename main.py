@@ -8,6 +8,8 @@ from config import (
     JOTFORM_WEBHOOK_SECRET
 )
 
+from fastapi import Form
+
 app = FastAPI()
 
 # -------------------------------
@@ -62,59 +64,101 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 # -----------------------------------------
 # Webhook Endpoint (Triggered by Jotform)
 # -----------------------------------------
-@app.post("/webhooks/jotform/tasso")
-async def jotform_webhook(request: Request):
-    payload = await request.json()
+# @app.post("/webhooks/jotform/tasso")
+# async def jotform_webhook(request: Request):
+#     payload = await request.json()
 
-    # -------------------------------
-    # (OPTIONAL) Webhook verification
-    # -------------------------------
-    received_secret = payload.get("webhook_secret")
-    if JOTFORM_WEBHOOK_SECRET and received_secret != JOTFORM_WEBHOOK_SECRET:
+#     # -------------------------------
+#     # (OPTIONAL) Webhook verification
+#     # -------------------------------
+#     received_secret = payload.get("webhook_secret")
+#     if JOTFORM_WEBHOOK_SECRET and received_secret != JOTFORM_WEBHOOK_SECRET:
+#         raise HTTPException(status_code=401, detail="Unauthorized webhook")
+
+#     # -------------------------------
+#     # Extract Jotform fields
+#     # (adjust field names!)
+#     # -------------------------------
+#     try:
+#         submission = payload["content"]
+#         print(payload)
+
+#         patient_payload = {
+#             "firstName": submission["first_name"],
+#             "lastName": submission["last_name"],
+#             "dob": submission["dob"],  # YYYY-MM-DD
+#             "sexAtBirth": submission.get("sex", "unknown"),
+#             "contact": {
+#                 "email": submission["email"],
+#                 "phone": submission["phone"]
+#             },
+#             "address": {
+#                 "line1": submission["address_line1"],
+#                 "line2": submission.get("address_line2"),
+#                 "city": submission["city"],
+#                 "state": submission["state"],
+#                 "postalCode": submission["zip"],
+#                 "country": "US"
+#             }
+#         }
+#     except KeyError as e:
+#         raise HTTPException(status_code=400, detail=f"Missing field: {e}")
+
+#     # -------------------------------
+#     # Create patient in Tasso
+#     # -------------------------------
+#     # try:
+#     #     token = get_tasso_token()
+#     #     tasso_patient = create_tasso_patient(token, patient_payload)
+#     # except Exception as e:
+#     #     raise HTTPException(status_code=500, detail=str(e))
+
+#     # -------------------------------
+#     # Success response
+#     # -------------------------------
+#     return {
+#         "status": "success",
+#         "tasso_patient_id": tasso_patient["results"]["id"]
+#     }
+
+@app.post("/webhooks/jotform/tasso")
+async def jotform_webhook(
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    dob: str = Form(...),
+    sex: str = Form(None),
+    email: str = Form(...),
+    phone: str = Form(...),
+    address_line1: str = Form(...),
+    address_line2: str = Form(None),
+    city: str = Form(...),
+    state: str = Form(...),
+    zip: str = Form(...),
+    webhook_secret: str = Form(None)
+):
+    if JOTFORM_WEBHOOK_SECRET and webhook_secret != JOTFORM_WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized webhook")
 
-    # -------------------------------
-    # Extract Jotform fields
-    # (adjust field names!)
-    # -------------------------------
-    try:
-        submission = payload["content"]
-        print(payload)
+    patient_payload = {
+        "firstName": first_name,
+        "lastName": last_name,
+        "dob": dob,
+        "sexAtBirth": sex or "unknown",
+        "contact": {"email": email, "phone": phone},
+        "address": {
+            "line1": address_line1,
+            "line2": address_line2,
+            "city": city,
+            "state": state,
+            "postalCode": zip,
+            "country": "US",
+        },
+    }
 
-        patient_payload = {
-            "firstName": submission["first_name"],
-            "lastName": submission["last_name"],
-            "dob": submission["dob"],  # YYYY-MM-DD
-            "sexAtBirth": submission.get("sex", "unknown"),
-            "contact": {
-                "email": submission["email"],
-                "phone": submission["phone"]
-            },
-            "address": {
-                "line1": submission["address_line1"],
-                "line2": submission.get("address_line2"),
-                "city": submission["city"],
-                "state": submission["state"],
-                "postalCode": submission["zip"],
-                "country": "US"
-            }
-        }
-    except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"Missing field: {e}")
-
-    # -------------------------------
-    # Create patient in Tasso
-    # -------------------------------
     # try:
     #     token = get_tasso_token()
     #     tasso_patient = create_tasso_patient(token, patient_payload)
     # except Exception as e:
     #     raise HTTPException(status_code=500, detail=str(e))
 
-    # -------------------------------
-    # Success response
-    # -------------------------------
-    return {
-        "status": "success",
-        "tasso_patient_id": tasso_patient["results"]["id"]
-    }
+    return {"status": "success", "tasso_patient_id": tasso_patient["results"]["id"]}
