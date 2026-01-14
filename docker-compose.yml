@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: tasso-backend
     ports:
-      - "8000:8000"
+      - "8000:8004"
     env_file:
       - .env
     restart: unless-stopped
