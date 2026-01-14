@@ -79,6 +79,7 @@ async def jotform_webhook(request: Request):
     # -------------------------------
     try:
         submission = payload["content"]
+        print(payload)
 
         patient_payload = {
             "firstName": submission["first_name"],
@@ -104,11 +105,11 @@ async def jotform_webhook(request: Request):
     # -------------------------------
     # Create patient in Tasso
     # -------------------------------
-    try:
-        token = get_tasso_token()
-        tasso_patient = create_tasso_patient(token, patient_payload)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # try:
+    #     token = get_tasso_token()
+    #     tasso_patient = create_tasso_patient(token, patient_payload)
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
 
     # -------------------------------
     # Success response
