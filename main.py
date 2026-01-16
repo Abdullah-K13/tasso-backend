@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 from config import (
     TASSO_BASE_URL,
+    JOTFORM_WEBHOOK_SECRET,
     TASSO_USERNAME,
     TASSO_SECRET,
-    JOTFORM_WEBHOOK_SECRET
-)
+    TASSO_PROJECT_ID)
 
 from fastapi import Form
 
@@ -30,17 +30,26 @@ def get_tasso_token() -> str:
     url = f"{TASSO_BASE_URL}/authTokens"
 
     payload = {
-        "username": TASSO_USERNAME,
-        "secret": TASSO_SECRET
+        "username": f"{TASSO_USERNAME}",
+        "secret":   f"{TASSO_SECRET}"
     }
 
-    response = requests.post(url, json=payload, timeout=10)
+    headers = {
+        "Content-Type": "application/json"
+    }
 
-    if response.status_code != 200:
-        raise Exception("Failed to authenticate with Tasso")
+    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    print('---------------')
+    print(response.text)
 
-    return response.json()["results"]["idToken"]
+    # if response.status_code != 200:
+    #     raise Exception(f"Tasso auth failed: {response.text}")
+    
+    data = response.json()
+    if "results" not in data or "idToken" not in data["results"]:
+        raise Exception(f"Unexpected response format: {response.text}")
 
+    return data["results"]["idToken"]
 
 # -------------------------------
 # Helper: Create Patient in Tasso
@@ -131,23 +140,29 @@ async def jotform_webhook(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized webhook")
 
     try:
+        # Map JotForm fields to Tasso API format
         patient_payload = {
+            "projectId": TASSO_PROJECT_ID,
+            "subjectId": form.get("subject_id") or form.get("q_subjectId") or "AUTO-" + form.get("submission_id", "unknown"),
             "firstName": form.get("first_name") or form.get("q3_name[first]"),
             "lastName": form.get("last_name") or form.get("q3_name[last]"),
-            "dob": form.get("dob") or form.get("q10_dob"),
-            "sexAtBirth": form.get("sex") or "unknown",
-            "contact": {
-                "email": form.get("email") or form.get("q5_email"),
-                "phone": form.get("phone") or form.get("q7_phoneNumber"),
-            },
-            "address": {
-                "line1": form.get("address_line1") or form.get("q8_address[addr_line1]"),
-                "line2": form.get("address_line2"),
+            "shippingAddress": {
+                "address1": form.get("address_line1") or form.get("q8_address[addr_line1]"),
+                "address2": form.get("address_line2") or form.get("q8_address[addr_line2]") or "",
                 "city": form.get("city") or form.get("q8_address[city]"),
-                "state": form.get("state") or form.get("q8_address[state]"),
+                "district1": form.get("state") or form.get("q8_address[state]"),
                 "postalCode": form.get("zip") or form.get("q8_address[postal]"),
-                "country": "US",
+                "country": "US"
             },
+            "contactInformation": {
+                "email": form.get("email") or form.get("q5_email"),
+                "phoneNumber": form.get("phone") or form.get("q7_phoneNumber")
+            },
+            "dateOfBirth": form.get("dob") or form.get("q10_dob"),
+            "gender": form.get("gender") or form.get("q_gender") or "preferNotToAnswer",
+            "assignedSex": form.get("sex") or form.get("q_sex") or "unknown",
+            "race": form.get("race") or form.get("q_race") or "Prefer not to answer",
+            "smsConsent": form.get("sms_consent") == "Yes" or form.get("q_smsConsent") == "Yes"
         }
 
         # Validate critical fields
