@@ -9,6 +9,7 @@ from config import (
     TASSO_PROJECT_ID)
 
 from fastapi import Form
+import traceback
 
 app = FastAPI()
 
@@ -73,74 +74,12 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 # -----------------------------------------
 # Webhook Endpoint (Triggered by Jotform)
 # -----------------------------------------
-# @app.post("/webhooks/jotform/tasso")
-# async def jotform_webhook(request: Request):
-#     payload = await request.json()
-
-#     # -------------------------------
-#     # (OPTIONAL) Webhook verification
-#     # -------------------------------
-#     received_secret = payload.get("webhook_secret")
-#     if JOTFORM_WEBHOOK_SECRET and received_secret != JOTFORM_WEBHOOK_SECRET:
-#         raise HTTPException(status_code=401, detail="Unauthorized webhook")
-
-#     # -------------------------------
-#     # Extract Jotform fields
-#     # (adjust field names!)
-#     # -------------------------------
-#     try:
-#         submission = payload["content"]
-#         print(payload)
-
-#         patient_payload = {
-#             "firstName": submission["first_name"],
-#             "lastName": submission["last_name"],
-#             "dob": submission["dob"],  # YYYY-MM-DD
-#             "sexAtBirth": submission.get("sex", "unknown"),
-#             "contact": {
-#                 "email": submission["email"],
-#                 "phone": submission["phone"]
-#             },
-#             "address": {
-#                 "line1": submission["address_line1"],
-#                 "line2": submission.get("address_line2"),
-#                 "city": submission["city"],
-#                 "state": submission["state"],
-#                 "postalCode": submission["zip"],
-#                 "country": "US"
-#             }
-#         }
-#     except KeyError as e:
-#         raise HTTPException(status_code=400, detail=f"Missing field: {e}")
-
-#     # -------------------------------
-#     # Create patient in Tasso
-#     # -------------------------------
-#     # try:
-#     #     token = get_tasso_token()
-#     #     tasso_patient = create_tasso_patient(token, patient_payload)
-#     # except Exception as e:
-#     #     raise HTTPException(status_code=500, detail=str(e))
-
-#     # -------------------------------
-#     # Success response
-#     # -------------------------------
-#     return {
-#         "status": "success",
-#         "tasso_patient_id": tasso_patient["results"]["id"]
-#     }
 @app.post("/webhooks/jotform/tasso")
 async def jotform_webhook(request: Request):
-    form = await request.form()
-    print(form)
-
-    # Optional secret check - DISABLED: JotForm doesn't send webhook_secret in form data
-    # webhook_secret = form.get("webhook_secret")
-    # if JOTFORM_WEBHOOK_SECRET and webhook_secret != JOTFORM_WEBHOOK_SECRET:
-    #     raise HTTPException(status_code=401, detail="Unauthorized webhook")
-
     try:
-        # Map JotForm fields to Tasso API format
+        form = await request.form()
+        print("RAW FORM:", form)
+
         patient_payload = {
             "projectId": TASSO_PROJECT_ID,
             "subjectId": form.get("subject_id") or form.get("q_subjectId") or "AUTO-" + form.get("submission_id", "unknown"),
@@ -165,17 +104,20 @@ async def jotform_webhook(request: Request):
             "smsConsent": form.get("sms_consent") == "Yes" or form.get("q_smsConsent") == "Yes"
         }
 
-        # Validate critical fields
+        print("PATIENT PAYLOAD:", patient_payload)
+
         if not patient_payload["firstName"] or not patient_payload["lastName"]:
             raise ValueError("Missing patient name")
 
         token = get_tasso_token()
         tasso_patient = create_tasso_patient(token, patient_payload)
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "status": "success",
+            "tasso_patient_id": tasso_patient["results"]["id"]
+        }
 
-    return {
-        "status": "success",
-        "tasso_patient_id": tasso_patient["results"]["id"]
-    }
+    except Exception as e:
+        print("ERROR STACKTRACE:")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
