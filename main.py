@@ -134,10 +134,10 @@ async def jotform_webhook(request: Request):
     form = await request.form()
     print(form)
 
-    # Optional secret check
-    webhook_secret = form.get("webhook_secret")
-    if JOTFORM_WEBHOOK_SECRET and webhook_secret != JOTFORM_WEBHOOK_SECRET:
-        raise HTTPException(status_code=401, detail="Unauthorized webhook")
+    # Optional secret check - DISABLED: JotForm doesn't send webhook_secret in form data
+    # webhook_secret = form.get("webhook_secret")
+    # if JOTFORM_WEBHOOK_SECRET and webhook_secret != JOTFORM_WEBHOOK_SECRET:
+    #     raise HTTPException(status_code=401, detail="Unauthorized webhook")
 
     try:
         # Map JotForm fields to Tasso API format
