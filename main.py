@@ -108,6 +108,13 @@ async def jotform_webhook(request: Request):
         }
         tasso_sex = sex_map.get(jot_gender, "unknown")
 
+        addr = data.get("q5_shippingAddress", {})
+
+        address1 = addr.get("addr_line1") or "Unknown"
+        city = addr.get("city") or "Unknown"
+        state = addr.get("state") or "Unknown"
+        postal = addr.get("postal") or "00000"
+
 
         patient_payload = {
             "projectId": TASSO_PROJECT_ID,
@@ -115,10 +122,10 @@ async def jotform_webhook(request: Request):
             "firstName": name.get("first"),
             "lastName": name.get("last"),
             "shippingAddress": {
-                "address1": addr.get("addr_line1"),
+                "address1": address1,
                 "address2": addr.get("addr_line2") or "",
-                "city": addr.get("city"),
-                "district1": addr.get("state"),
+                "city": city,
+                "district1": state,
                 "postalCode": postal,
                 "country": "US"
             },
