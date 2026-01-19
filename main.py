@@ -10,6 +10,7 @@ from config import (
 
 from fastapi import Form
 import traceback
+import json
 
 app = FastAPI()
 
@@ -78,31 +79,40 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 async def jotform_webhook(request: Request):
     try:
         form = await request.form()
-        print("RAW FORM:", form)
+
+        raw = form.get("rawRequest")
+        data = json.loads(raw)
+
+        print("PARSED RAW:", data)
+        name = data.get("q3_name", {})
+        dob = data.get("q16_dateOf", {})
+        phone = data.get("q6_phoneNumber", {})
+        addr = data.get("q5_shippingAddress", {})
 
         patient_payload = {
             "projectId": TASSO_PROJECT_ID,
-            "subjectId": form.get("subject_id") or form.get("q_subjectId") or "AUTO-" + form.get("submission_id", "unknown"),
-            "firstName": form.get("first_name") or form.get("q3_name[first]"),
-            "lastName": form.get("last_name") or form.get("q3_name[last]"),
+            "subjectId": "AUTO-" + data.get("event_id", "unknown"),
+            "firstName": name.get("first"),
+            "lastName": name.get("last"),
             "shippingAddress": {
-                "address1": form.get("address_line1") or form.get("q8_address[addr_line1]"),
-                "address2": form.get("address_line2") or form.get("q8_address[addr_line2]") or "",
-                "city": form.get("city") or form.get("q8_address[city]"),
-                "district1": form.get("state") or form.get("q8_address[state]"),
-                "postalCode": form.get("zip") or form.get("q8_address[postal]"),
+                "address1": addr.get("addr_line1"),
+                "address2": addr.get("addr_line2") or "",
+                "city": addr.get("city"),
+                "district1": addr.get("state"),
+                "postalCode": addr.get("postal"),
                 "country": "US"
             },
             "contactInformation": {
-                "email": form.get("email") or form.get("q5_email"),
-                "phoneNumber": form.get("phone") or form.get("q7_phoneNumber")
+                "email": data.get("q4_email"),
+                "phoneNumber": f"{phone.get('area','')}{phone.get('phone','')}",
             },
-            "dateOfBirth": form.get("dob") or form.get("q10_dob"),
-            "gender": form.get("gender") or form.get("q_gender") or "preferNotToAnswer",
-            "assignedSex": form.get("sex") or form.get("q_sex") or "unknown",
-            "race": form.get("race") or form.get("q_race") or "Prefer not to answer",
-            "smsConsent": form.get("sms_consent") == "Yes" or form.get("q_smsConsent") == "Yes"
+            "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
+            "gender": data.get("q15_gender"),
+            "assignedSex": data.get("q15_gender"),
+            "race": data.get("q17_race"),
+            "smsConsent": False
         }
+
 
         print("PATIENT PAYLOAD:", patient_payload)
 
