@@ -94,13 +94,13 @@ async def jotform_webhook(request: Request):
 
         # If 10 digits, assume US and add +1
         if len(digits) == 10:
-            formatted_phone = "+1" + digits
+    # US local number
+            formatted_phone = "1" + digits          # 18632756381
         elif len(digits) == 11 and digits.startswith("1"):
-            formatted_phone = "+" + digits
-        elif digits.startswith("+"):
-            formatted_phone = digits
+            # Already has country code
+            formatted_phone = digits                # 18632756381
         else:
-            formatted_phone = None  # invalid
+            formatted_phone = None                  # invalid
 
         if formatted_phone:
             contact = {
