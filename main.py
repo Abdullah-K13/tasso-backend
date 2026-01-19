@@ -87,6 +87,31 @@ async def jotform_webhook(request: Request):
         name = data.get("q3_name", {})
         dob = data.get("q16_dateOf", {})
         phone = data.get("q6_phoneNumber", {})
+        digits = f"{phone.get('area','')}{phone.get('phone','')}"
+
+        # keep only digits
+        digits = "".join([c for c in digits if c.isdigit()])
+
+        # If 10 digits, assume US and add +1
+        if len(digits) == 10:
+            formatted_phone = "+1" + digits
+        elif len(digits) == 11 and digits.startswith("1"):
+            formatted_phone = "+" + digits
+        elif digits.startswith("+"):
+            formatted_phone = digits
+        else:
+            formatted_phone = None  # invalid
+
+        if formatted_phone:
+            contact = {
+                "email": data.get("q4_email"),
+                "phoneNumber": formatted_phone,
+              }
+        else:
+            contact = {
+                "email": data.get("q4_email"),
+            }    
+
         addr = data.get("q5_shippingAddress", {})
         raw_id = data.get("event_id", "unknown")
         safe_id = raw_id.replace("_", "-")
@@ -129,10 +154,7 @@ async def jotform_webhook(request: Request):
                 "postalCode": postal,
                 "country": "US"
             },
-            "contactInformation": {
-                "email": data.get("q4_email"),
-                "phoneNumber": f"{phone.get('area','')}{phone.get('phone','')}",
-            },
+            "contactInformation": contact,
             "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
             "gender": tasso_gender,
             "assignedSex": tasso_sex,
