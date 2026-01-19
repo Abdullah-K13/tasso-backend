@@ -88,10 +88,30 @@ async def jotform_webhook(request: Request):
         dob = data.get("q16_dateOf", {})
         phone = data.get("q6_phoneNumber", {})
         addr = data.get("q5_shippingAddress", {})
+        raw_id = data.get("event_id", "unknown")
+        safe_id = raw_id.replace("_", "-")
+        jot_gender = data.get("q15_gender", "").lower()
+        postal = addr.get("postal")
+
+        if not postal:
+            postal = "00000"   # or skip field if allowed
+
+        gender_map = {
+            "male": "cisMale",
+            "female": "cisFemale",
+        }
+        tasso_gender = gender_map.get(jot_gender, "unspecified")
+
+        sex_map = {
+            "male": "male",
+            "female": "female"
+        }
+        tasso_sex = sex_map.get(jot_gender, "unknown")
+
 
         patient_payload = {
             "projectId": TASSO_PROJECT_ID,
-            "subjectId": "AUTO-" + data.get("event_id", "unknown"),
+            "subjectId": "AUTO-" + safe_id,
             "firstName": name.get("first"),
             "lastName": name.get("last"),
             "shippingAddress": {
@@ -99,7 +119,7 @@ async def jotform_webhook(request: Request):
                 "address2": addr.get("addr_line2") or "",
                 "city": addr.get("city"),
                 "district1": addr.get("state"),
-                "postalCode": addr.get("postal"),
+                "postalCode": postal,
                 "country": "US"
             },
             "contactInformation": {
@@ -107,8 +127,8 @@ async def jotform_webhook(request: Request):
                 "phoneNumber": f"{phone.get('area','')}{phone.get('phone','')}",
             },
             "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
-            "gender": data.get("q15_gender"),
-            "assignedSex": data.get("q15_gender"),
+            "gender": tasso_gender,
+            "assignedSex": tasso_sex,
             "race": data.get("q17_race"),
             "smsConsent": False
         }
