@@ -136,7 +136,10 @@ async def jotform_webhook(request: Request):
         addr = data.get("q5_shippingAddress", {})
 
         address1 = addr.get("addr_line1") or "Unknown"
-        address2 = addr.get("addr_line2") or "Unknown"
+        if addr.get("addr_line2") == '':
+            address2 = "Unknown"
+        else:
+            address2 = addr.get("addr_line2")
         city = addr.get("city") or "Unknown"
         state = addr.get("state") or "Unknown"
         postal = addr.get("postal") or "00000"
@@ -149,7 +152,7 @@ async def jotform_webhook(request: Request):
             "lastName": name.get("last"),
             "shippingAddress": {
                 "address1": address1,
-                "address2": addr.get("addr_line2") or "",
+                "address2": address2,
                 "city": city,
                 "district1": state,
                 "postalCode": postal,
