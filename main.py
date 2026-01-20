@@ -164,7 +164,7 @@ async def jotform_webhook(request: Request):
 
         normalized_address = {
             "address1": address1,
-            "address2": address2,
+            "address2": "Suite 105",
             "city": city,
             "district1": state_code,
             "postalCode": postal,
