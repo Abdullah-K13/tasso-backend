@@ -71,6 +71,13 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 
     return response.json()
 
+
+# -----------------------------------------
+# Webhook Endpoint (Triggered by Jotform)
+# -----------------------------------------
+@app.post("/webhooks/jotform/tasso")
+async def jotform_webhook(request: Request):
+
     US_STATE_CODES = {
         "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
         "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
@@ -87,12 +94,6 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
         "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
     }
 
-
-# -----------------------------------------
-# Webhook Endpoint (Triggered by Jotform)
-# -----------------------------------------
-@app.post("/webhooks/jotform/tasso")
-async def jotform_webhook(request: Request):
     try:
         form = await request.form()
 
