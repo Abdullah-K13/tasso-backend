@@ -136,6 +136,7 @@ async def jotform_webhook(request: Request):
         addr = data.get("q5_shippingAddress", {})
 
         address1 = addr.get("addr_line1") or "Unknown"
+        address2 = addr.get("addr_line2") or "Unknown"
         city = addr.get("city") or "Unknown"
         state = addr.get("state") or "Unknown"
         postal = addr.get("postal") or "00000"
