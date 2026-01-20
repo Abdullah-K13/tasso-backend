@@ -160,7 +160,10 @@ async def jotform_webhook(request: Request):
         city = addr.get("city") or "Unknown"
         state = addr.get("state") or "Unknown"
         postal = addr.get("postal") or "00000"
-        state_code = US_STATE_CODES.get(state, "Unknown")
+        if len(state) == 2:
+            state_code = state
+        else:   
+            state_code = US_STATE_CODES.get(state, "Unknown")
 
         normalized_address = {
             "address1": address1,
