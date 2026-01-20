@@ -163,18 +163,18 @@ async def jotform_webhook(request: Request):
         state_code = US_STATE_CODES.get(state, "Unknown")
 
         normalized_address = {
-            # "address1": address1,
-            # "address2": "Suite 105",
-            # "city": city,
-            # "district1": state_code,
-            # "postalCode": postal,
-            # "country": "US"
-            "address1": "1631 15th Ave W",
-            "address2": "Suite 105",
-            "city": "Seattle",
-            "district1": "WA",
-            "postalCode": "98119",
+            "address1": address1,
+            "address2": address2,
+            "city": city,
+            "district1": state_code,
+            "postalCode": postal,
             "country": "US"
+            # "address1": "1631 15th Ave W",
+            # "address2": "Suite 105",
+            # "city": "Seattle",
+            # "district1": "WA",
+            # "postalCode": "98119",
+            # "country": "US"
         }
 
         patient_payload = {
