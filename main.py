@@ -71,6 +71,22 @@ def create_tasso_patient(token: str, patient: dict) -> dict:
 
     return response.json()
 
+    US_STATE_CODES = {
+        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+        "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+        "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+        "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+        "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+        "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+        "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+        "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+        "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
+    }
+
 
 # -----------------------------------------
 # Webhook Endpoint (Triggered by Jotform)
@@ -143,21 +159,23 @@ async def jotform_webhook(request: Request):
         city = addr.get("city") or "Unknown"
         state = addr.get("state") or "Unknown"
         postal = addr.get("postal") or "00000"
+        state_code = US_STATE_CODES.get(state, "Unknown")
 
+        normalized_address = {
+            "address1": address1,
+            "address2": address2,
+            "city": city,
+            "district1": state_code,
+            "postalCode": postal,
+            "country": "US"
+        }
 
         patient_payload = {
             "projectId": TASSO_PROJECT_ID,
             "subjectId": "AUTO-" + safe_id,
             "firstName": name.get("first"),
             "lastName": name.get("last"),
-            "shippingAddress": {
-                "address1": address1,
-                "address2": address2,
-                "city": city,
-                "district1": state,
-                "postalCode": postal,
-                "country": "US"
-            },
+            "shippingAddress": normalized_address,
             "contactInformation": contact,
             "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
             "gender": tasso_gender,
