@@ -6,7 +6,8 @@ from config import (
     JOTFORM_WEBHOOK_SECRET,
     TASSO_USERNAME,
     TASSO_SECRET,
-    TASSO_PROJECT_ID)
+    GLP1_PROJECT_ID,
+    TESTOSTRONE_PROJECT_ID)
 
 from fastapi import Form
 import traceback
@@ -109,6 +110,14 @@ async def jotform_webhook(request: Request):
         # keep only digits
         digits = "".join([c for c in digits if c.isdigit()])
 
+        path = data.get("path", "")
+        if path == "/submit/242116255933151":
+            project_id = GLP1_PROJECT_ID
+        elif path == "/submit/242115439242147":
+            project_id = TESTOSTRONE_PROJECT_ID
+        else:
+            project_id = GLP1_PROJECT_ID
+
         # If 10 digits, assume US and add +1
         if len(digits) == 10:
     # US local number
@@ -181,7 +190,7 @@ async def jotform_webhook(request: Request):
         }
 
         patient_payload = {
-            "projectId": TASSO_PROJECT_ID,
+            "projectId": project_id,
             "subjectId": "AUTO-" + safe_id,
             "firstName": name.get("first"),
             "lastName": name.get("last"),
