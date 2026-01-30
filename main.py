@@ -95,265 +95,260 @@ def create_tasso_order(token: str, order: dict) -> dict:
 # -----------------------------------------
 # Webhook Endpoint (Triggered by Jotform)
 # -----------------------------------------
-@app.post("/webhooks/jotform/tasso")
-async def jotform_webhook(request: Request):
+# @app.post("/webhooks/jotform/tasso")
+# async def jotform_webhook(request: Request):
 
-    US_STATE_CODES = {
-        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-        "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-        "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-        "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-        "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-        "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-        "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-        "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-        "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
-    }
+#     US_STATE_CODES = {
+#         "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+#         "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+#         "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+#         "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+#         "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+#         "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+#         "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+#         "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+#         "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+#         "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+#         "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+#         "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+#         "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC"
+#     }
 
-    try:
-        form = await request.form()
+#     try:
+#         form = await request.form()
 
-        raw = form.get("rawRequest")
-        data = json.loads(raw)
+#         raw = form.get("rawRequest")
+#         data = json.loads(raw)
 
-        print("PARSED RAW:", data)
-        name = data.get("q3_name", {})
-        dob = data.get("q16_dateOf", {})
-        phone = data.get("q6_phoneNumber", {})
-        digits = f"{phone.get('area','')}{phone.get('phone','')}"
+#         print("PARSED RAW:", data)
+#         name = data.get("q3_name", {})
+#         dob = data.get("q16_dateOf", {})
+#         phone = data.get("q6_phoneNumber", {})
+#         digits = f"{phone.get('area','')}{phone.get('phone','')}"
 
-        # keep only digits
-        digits = "".join([c for c in digits if c.isdigit()])
+#         # keep only digits
+#         digits = "".join([c for c in digits if c.isdigit()])
 
-        path = data.get("path", "")
-        if path == "/submit/242116255933151":
-            project_id = GLP1_PROJECT_ID
-        elif path == "/submit/242115439242147":
-            project_id = TESTOSTRONE_PROJECT_ID
-        else:
-            project_id = GLP1_PROJECT_ID
+#         path = data.get("path", "")
+#         if path == "/submit/242116255933151":
+#             project_id = GLP1_PROJECT_ID
+#         elif path == "/submit/242115439242147":
+#             project_id = TESTOSTRONE_PROJECT_ID
+#         else:
+#             project_id = GLP1_PROJECT_ID
 
-        # If 10 digits, assume US and add +1
-        if len(digits) == 10:
-    # US local number
-            formatted_phone = "1" + digits          # 18632756381
-        elif len(digits) == 11 and digits.startswith("1"):
-            # Already has country code
-            formatted_phone = digits                # 18632756381
-        else:
-            formatted_phone = None                  # invalid
+#         # If 10 digits, assume US and add +1
+#         if len(digits) == 10:
+#     # US local number
+#             formatted_phone = "1" + digits          # 18632756381
+#         elif len(digits) == 11 and digits.startswith("1"):
+#             # Already has country code
+#             formatted_phone = digits                # 18632756381
+#         else:
+#             formatted_phone = None                  # invalid
 
-        if formatted_phone:
-            contact = {
-                "email": data.get("q4_email"),
-                "phoneNumber": formatted_phone,
-              }
-        else:
-            contact = {
-                "email": data.get("q4_email"),
-            }    
+#         if formatted_phone:
+#             contact = {
+#                 "email": data.get("q4_email"),
+#                 "phoneNumber": formatted_phone,
+#               }
+#         else:
+#             contact = {
+#                 "email": data.get("q4_email"),
+#             }    
 
-        addr = data.get("q5_shippingAddress", {})
-        raw_id = data.get("event_id", "unknown")
-        safe_id = raw_id.replace("_", "-")
-        jot_gender = data.get("q15_gender", "").lower()
-        postal = addr.get("postal")
+#         addr = data.get("q5_shippingAddress", {})
+#         raw_id = data.get("event_id", "unknown")
+#         safe_id = raw_id.replace("_", "-")
+#         jot_gender = data.get("q15_gender", "").lower()
+#         postal = addr.get("postal")
 
-        if not postal:
-            postal = "00000"   # or skip field if allowed
+#         if not postal:
+#             postal = "00000"   # or skip field if allowed
 
-        gender_map = {
-            "male": "cisMale",
-            "female": "cisFemale",
-        }
-        tasso_gender = gender_map.get(jot_gender, "unspecified")
+#         gender_map = {
+#             "male": "cisMale",
+#             "female": "cisFemale",
+#         }
+#         tasso_gender = gender_map.get(jot_gender, "unspecified")
 
-        sex_map = {
-            "male": "male",
-            "female": "female"
-        }
-        tasso_sex = sex_map.get(jot_gender, "unknown")
+#         sex_map = {
+#             "male": "male",
+#             "female": "female"
+#         }
+#         tasso_sex = sex_map.get(jot_gender, "unknown")
 
-        addr = data.get("q5_shippingAddress", {})
+#         addr = data.get("q5_shippingAddress", {})
 
-        address1 = addr.get("addr_line1") or "Unknown"
-        if addr.get("addr_line2") == '':
-            address2 = "Unknown"
-        else:
-            address2 = addr.get("addr_line2")
-        city = addr.get("city") or "Unknown"
-        state = addr.get("state") or "Unknown"
-        postal = addr.get("postal") or "00000"
-        if len(state) == 2:
-            state_code = state
-        else:   
-            state_code = US_STATE_CODES.get(state, "Unknown")
+#         address1 = addr.get("addr_line1") or "Unknown"
+#         if addr.get("addr_line2") == '':
+#             address2 = "Unknown"
+#         else:
+#             address2 = addr.get("addr_line2")
+#         city = addr.get("city") or "Unknown"
+#         state = addr.get("state") or "Unknown"
+#         postal = addr.get("postal") or "00000"
+#         if len(state) == 2:
+#             state_code = state
+#         else:   
+#             state_code = US_STATE_CODES.get(state, "Unknown")
 
-        normalized_address = {
-            "address1": address1,
-            "address2": address2,
-            "city": city,
-            "district1": state_code,
-            "postalCode": postal,
-            "country": "US"
-            # "address1": "1631 15th Ave W",
-            # "address2": "Suite 105",
-            # "city": "Seattle",
-            # "district1": "WA",
-            # "postalCode": "98119",
-            # "country": "US"
-        }
+#         normalized_address = {
+#             "address1": address1,
+#             "address2": address2,
+#             "city": city,
+#             "district1": state_code,
+#             "postalCode": postal,
+#             "country": "US"
+#             # "address1": "1631 15th Ave W",
+#             # "address2": "Suite 105",
+#             # "city": "Seattle",
+#             # "district1": "WA",
+#             # "postalCode": "98119",
+#             # "country": "US"
+#         }
 
-        patient_payload = {
-            "projectId": project_id,
-            "subjectId": "AUTO-" + safe_id,
-            "firstName": name.get("first"),
-            "lastName": name.get("last"),
-            "shippingAddress": normalized_address,
-            "contactInformation": contact,
-            "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
-            "gender": tasso_gender,
-            "assignedSex": tasso_sex,
-            "race": data.get("q17_race"),
-            "smsConsent": False
-        }
-
-
-        print("PATIENT PAYLOAD:", patient_payload)
-
-        if not patient_payload["firstName"] or not patient_payload["lastName"]:
-            raise ValueError("Missing patient name")
-
-        token = get_tasso_token()
-        tasso_patient = create_tasso_patient(token, patient_payload)
-
-        return {
-            "status": "success",
-            "tasso_patient_id": tasso_patient["results"]["id"]
-        }
-
-    except Exception as e:
-        print("ERROR STACKTRACE:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
+#         patient_payload = {
+#             "projectId": project_id,
+#             "subjectId": "AUTO-" + safe_id,
+#             "firstName": name.get("first"),
+#             "lastName": name.get("last"),
+#             "shippingAddress": normalized_address,
+#             "contactInformation": contact,
+#             "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
+#             "gender": tasso_gender,
+#             "assignedSex": tasso_sex,
+#             "race": data.get("q17_race"),
+#             "smsConsent": False
+#         }
 
 
-# -----------------------------------------
-# API Endpoint: Create Order for Patient
-# -----------------------------------------
-@app.post("/orders/create")
-async def create_order(request: Request):
-    """
-    Create an order for a patient's kit in Tasso.
+#         print("PATIENT PAYLOAD:", patient_payload)
+
+#         if not patient_payload["firstName"] or not patient_payload["lastName"]:
+#             raise ValueError("Missing patient name")
+
+#         token = get_tasso_token()
+#         tasso_patient = create_tasso_patient(token, patient_payload)
+
+#         return {
+#             "status": "success",
+#             "tasso_patient_id": tasso_patient["results"]["id"]
+#         }
+
+#     except Exception as e:
+#         print("ERROR STACKTRACE:")
+#         print(traceback.format_exc())
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+# # -----------------------------------------
+# # API Endpoint: Create Order for Patient
+# # -----------------------------------------
+# @app.post("/orders/create")
+# async def create_order(request: Request):
+#     """
+#     Create an order for a patient's kit in Tasso.
     
-    Expected JSON payload:
-    {
-        "patientId": "e3bb6a15-e19e-47f2-b484-87939cae395f",
-        "configurationId": "fOsd_k9GQ3",
-        "npi": {
-            "id": "1234509876",
-            "firstName": "Marcy",
-            "lastName": "Frank"
-        },
-        "containerIdentifier": "0000000176",  // Optional
-        "shipByDate": "2021-10-18",  // Optional, format: YYYY-MM-DD
-        "customAttributes": [  // Optional
-            {
-                "name": "attrib1",
-                "value": "a str"
-            }
-        ]
-    }
-    """
-    try:
-        body = await request.json()
+#     Expected JSON payload:
+#     {
+#         "patientId": "e3bb6a15-e19e-47f2-b484-87939cae395f",
+#         "configurationId": "fOsd_k9GQ3",
+#         "npi": {
+#             "id": "1234509876",
+#             "firstName": "Marcy",
+#             "lastName": "Frank"
+#         },
+#         "containerIdentifier": "0000000176",  // Optional
+#         "shipByDate": "2021-10-18",  // Optional, format: YYYY-MM-DD
+#         "customAttributes": [  // Optional
+#             {
+#                 "name": "attrib1",
+#                 "value": "a str"
+#             }
+#         ]
+#     }
+#     """
+#     try:
+#         body = await request.json()
         
-        # Validate required fields
-        patient_id = body.get("patientId")
-        configuration_id = body.get("configurationId")
-        npi = body.get("npi")
+#         # Validate required fields
+#         patient_id = body.get("patientId")
+#         configuration_id = body.get("configurationId")
+#         npi = body.get("npi")
         
-        if not patient_id:
-            raise ValueError("patientId is required")
-        if not npi or not npi.get("id"):
-            raise ValueError("npi information is required")
+#         if not patient_id:
+#             raise ValueError("patientId is required")
+#         if not npi or not npi.get("id"):
+#             raise ValueError("npi information is required")
         
-        # Build order payload
-        order_payload = {
-            "patientId": patient_id,
-            "provider": {
-                "npi": {
-                    "id": npi.get("id"),
-                    "firstName": npi.get("firstName"),
-                    "lastName": npi.get("lastName")
-                }
-            }
-        }
+#         # Build order payload
+#         order_payload = {
+#             "patientId": patient_id,
+#             "provider": {
+#                 "npi": {
+#                     "id": npi.get("id"),
+#                     "firstName": npi.get("firstName"),
+#                     "lastName": npi.get("lastName")
+#                 }
+#             }
+#         }
 
-        # Add configurationId if provided
-        if configuration_id:
-             order_payload["orderConfiguration"] = {
-                "configurationId": configuration_id
-            }
 
-        # Remove empty provider names
-        npi_obj = order_payload["provider"]["npi"]
-        if not npi_obj.get("firstName"):
-            npi_obj.pop("firstName", None)
-        if not npi_obj.get("lastName"):
-            npi_obj.pop("lastName", None)
+#         # Remove empty provider names
+#         npi_obj = order_payload["provider"]["npi"]
+#         if not npi_obj.get("firstName"):
+#             npi_obj.pop("firstName", None)
+#         if not npi_obj.get("lastName"):
+#             npi_obj.pop("lastName", None)
         
-        # Add optional specimens if provided
-        container_identifier = body.get("containerIdentifier")
-        if container_identifier:
-            order_payload["specimens"] = [
-                {
-                    "containerIdentifier": container_identifier
-                }
-            ]
+#         # Add optional specimens if provided
+#         container_identifier = body.get("containerIdentifier")
+#         if container_identifier:
+#             order_payload["specimens"] = [
+#                 {
+#                     "containerIdentifier": container_identifier
+#                 }
+#             ]
         
-        # Add optional timing if provided
-        ship_by_date = body.get("shipByDate")
-        if ship_by_date:
-            order_payload["timing"] = {
-                "shipByDate": ship_by_date
-            }
+#         # Add optional timing if provided
+#         ship_by_date = body.get("shipByDate")
+#         if ship_by_date:
+#             order_payload["timing"] = {
+#                 "shipByDate": ship_by_date
+#             }
         
-        # Add optional custom attributes if provided
-        custom_attributes = body.get("customAttributes")
-        if custom_attributes:
-            order_payload["customAttributes"] = custom_attributes
+#         # Add optional custom attributes if provided
+#         custom_attributes = body.get("customAttributes")
+#         if custom_attributes:
+#             order_payload["customAttributes"] = custom_attributes
         
-        print("ORDER PAYLOAD:", order_payload)
+#         print("ORDER PAYLOAD:", order_payload)
         
-        # Get authentication token
-        token = get_tasso_token()
+#         # Get authentication token
+#         token = get_tasso_token()
         
-        # Create the order
-        tasso_order = create_tasso_order(token, order_payload)
+#         # Create the order
+#         tasso_order = create_tasso_order(token, order_payload)
         
-        return {
-            "status": "success",
-            "order": tasso_order.get("results", tasso_order)
-        }
+#         return {
+#             "status": "success",
+#             "order": tasso_order.get("results", tasso_order)
+#         }
         
-    except ValueError as ve:
-        print(f"Validation Error: {str(ve)}")
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        print("ERROR STACKTRACE:")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
+#     except ValueError as ve:
+#         print(f"Validation Error: {str(ve)}")
+#         raise HTTPException(status_code=400, detail=str(ve))
+#     except Exception as e:
+#         print("ERROR STACKTRACE:")
+#         print(traceback.format_exc())
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 # -----------------------------------------
 # Combined Endpoint: Create Patient + Order
 # -----------------------------------------
-@app.post("/webhooks/jotform/tasso-with-order")
+@app.post("/webhooks/jotform/tasso")
 async def jotform_webhook_with_order(request: Request):
     """
     Create a patient and immediately create an order for them.
