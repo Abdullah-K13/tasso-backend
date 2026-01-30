@@ -19,6 +19,23 @@ load_dotenv()
 # Import your helpers from main.py
 from main import get_tasso_token, create_tasso_patient
 
+def get_project_details(token: str) -> dict:
+    import requests
+    from config import TASSO_BASE_URL
+
+    url = f"{TASSO_BASE_URL}/projects/ac4d054b-a9c3-442d-9ce7-0ac19526bcbb"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch project: {response.status_code} - {response.text}")
+
+    return response.json()
+
 
 def bool_env(name: str, default: bool = False) -> bool:
     v = os.getenv(name)
@@ -183,4 +200,7 @@ def test_create_order():
 
 
 if __name__ == "__main__":
+    token = get_tasso_token()
+    project = get_project_details(token)
+    print(project)
     test_create_order()

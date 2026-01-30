@@ -498,65 +498,24 @@ async def jotform_webhook_with_order(request: Request):
         configuration_id = data.get("configurationId")  # Add this field to Jotform
         npi_data = data.get("npi", {})  # Add this field to Jotform
         
-        if npi_data.get("id"):
-            order_payload = {
-                "patientId": patient_id,
-                "provider": {
-                    "npi": {
-                        "id": npi_data.get("id"),
-                        "firstName": npi_data.get("firstName"),
-                        "lastName": npi_data.get("lastName")
-                    }
-                }
-            }
+        # if npi_data.get("id"):
+        order_payload = {
+            "patientId": patient_id
+        }
+        print(f"iam here 3333333333333333333333333333333333")
+        
+        print("ORDER PAYLOAD:", order_payload)
+        
+        # Create the order
+        tasso_order = create_tasso_order(token, order_payload)
+        
+        return {
+            "status": "success",
+            "tasso_patient_id": patient_id,
+            "tasso_order_id": tasso_order["results"]["id"],
+            "order_details": tasso_order.get("results", tasso_order)
+        }
 
-            if configuration_id:
-                order_payload["orderConfiguration"] = {
-                    "configurationId": configuration_id
-                }
-
-            print(f"iam here 3333333333333333333333333333333333")
-
-            # Remove empty provider names
-            npi_obj = order_payload["provider"]["npi"]
-            if not npi_obj.get("firstName"):
-                npi_obj.pop("firstName", None)
-            if not npi_obj.get("lastName"):
-                npi_obj.pop("lastName", None)
-            
-            # Add optional fields
-            container_identifier = data.get("containerIdentifier")
-            if container_identifier:
-                order_payload["specimens"] = [
-                    {
-                        "containerIdentifier": container_identifier
-                    }
-                ]
-            
-            ship_by_date = data.get("shipByDate")
-            if ship_by_date:
-                order_payload["timing"] = {
-                    "shipByDate": ship_by_date
-                }
-            
-            print("ORDER PAYLOAD:", order_payload)
-            
-            # Create the order
-            tasso_order = create_tasso_order(token, order_payload)
-            
-            return {
-                "status": "success",
-                "tasso_patient_id": patient_id,
-                "tasso_order_id": tasso_order["results"]["id"],
-                "order_details": tasso_order.get("results", tasso_order)
-            }
-        else:
-            # If no order configuration provided, just return patient creation
-            return {
-                "status": "success",
-                "tasso_patient_id": patient_id,
-                "note": "Patient created but no order was placed (missing configuration)"
-            }
 
     except Exception as e:
         print("ERROR STACKTRACE:")
