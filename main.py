@@ -491,6 +491,7 @@ async def jotform_webhook_with_order(request: Request):
         patient_id = tasso_patient["results"]["id"]
         
         print(f"Patient created with ID: {patient_id}")
+        print(f"iam here 2222222222222222222222222222222222")
         
         # Now create order for the patient
         # You'll need to add these fields to your Jotform
@@ -513,6 +514,8 @@ async def jotform_webhook_with_order(request: Request):
                 order_payload["orderConfiguration"] = {
                     "configurationId": configuration_id
                 }
+
+            print(f"iam here 3333333333333333333333333333333333")
 
             # Remove empty provider names
             npi_obj = order_payload["provider"]["npi"]
