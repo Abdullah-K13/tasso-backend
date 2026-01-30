@@ -453,6 +453,19 @@ async def jotform_webhook_with_order(request: Request):
             "country": "US"
         }
 
+        dob_year = dob.get("year", "")
+        dob_month = dob.get("month", "")
+        dob_day = dob.get("day", "")
+
+        if not (dob_year and dob_month and dob_day):
+             # You might want to handle this more gracefully or default/fail
+             # For now, let's raise so we don't send garbage to Tasso
+             raise ValueError("Date of Birth is incomplete in the form submission")
+
+        # Ensure 2 digits for month/day
+        dob_month = dob_month.zfill(2)
+        dob_day = dob_day.zfill(2)
+
         patient_payload = {
             "projectId": project_id,
             "subjectId": "AUTO-" + safe_id,
@@ -460,7 +473,7 @@ async def jotform_webhook_with_order(request: Request):
             "lastName": name.get("last"),
             "shippingAddress": normalized_address,
             "contactInformation": contact,
-            "dateOfBirth": f"{dob.get('year')}-{dob.get('month')}-{dob.get('day')}",
+            "dateOfBirth": f"{dob_year}-{dob_month}-{dob_day}",
             "gender": tasso_gender,
             "assignedSex": tasso_sex,
             "race": data.get("q17_race"),
