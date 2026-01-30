@@ -508,12 +508,13 @@ async def jotform_webhook_with_order(request: Request):
         
         # Create the order
         tasso_order = create_tasso_order(token, order_payload)
+        print("ORDER RESPONSE:", tasso_order)
         
         return {
             "status": "success",
             "tasso_patient_id": patient_id,
-            "tasso_order_id": tasso_order["results"]["id"],
-            "order_details": tasso_order.get("results", tasso_order)
+            # "tasso_order_id": tasso_order["results"]["id"],
+            # "order_details": tasso_order.get("results", tasso_order)
         }
 
 
