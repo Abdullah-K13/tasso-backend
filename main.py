@@ -433,14 +433,14 @@ async def jotform_webhook_with_order(request: Request):
         }
         tasso_sex = sex_map.get(jot_gender, "unknown")
 
-        address1 = addr.get("addr_line1") or "Unknown"
-        address2 = addr.get("addr_line2") if addr.get("addr_line2") != '' else "Unknown"
-        city = addr.get("city") or "Unknown"
-        state = addr.get("state") or "Unknown"
-        postal = addr.get("postal") or "00000"
+        address1 = (addr.get("addr_line1") or "Unknown").strip()
+        address2 = addr.get("addr_line2").strip() if addr.get("addr_line2") else "Unknown"
+        city = (addr.get("city") or "Unknown").strip()
+        state = (addr.get("state") or "Unknown").strip()
+        postal = (addr.get("postal") or "00000").strip()
         
         if len(state) == 2:
-            state_code = state
+            state_code = state.upper()
         else:
             state_code = US_STATE_CODES.get(state, "Unknown")
 
