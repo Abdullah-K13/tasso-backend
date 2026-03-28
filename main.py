@@ -466,6 +466,22 @@ async def jotform_webhook_with_order(request: Request):
         dob_month = dob_month.zfill(2)
         dob_day = dob_day.zfill(2)
 
+        jot_race = data.get("q17_race", "")
+        if isinstance(jot_race, str):
+            jot_race_clean = jot_race.strip().lower()
+            race_map = {
+                "american indian or alaska native": "American Indian or Alaska Native",
+                "asian": "Asian",
+                "black or african american": "Black or African American",
+                "native hawaiian or other pacific islander": "Native Hawaiian or Other Pacific Islander",
+                "hispanic or latino": "Hispanic or Latino",
+                "white": "White",
+                "other": "Other"
+            }
+            tasso_race = race_map.get(jot_race_clean, "Other")
+        else:
+            tasso_race = "Other"
+
         patient_payload = {
             "projectId": project_id,
             "subjectId": "AUTO-" + safe_id,
@@ -476,7 +492,7 @@ async def jotform_webhook_with_order(request: Request):
             "dateOfBirth": f"{dob_year}-{dob_month}-{dob_day}",
             "gender": tasso_gender,
             "assignedSex": tasso_sex,
-            "race": data.get("q17_race"),
+            "race": tasso_race,
             "smsConsent": False
         }
 

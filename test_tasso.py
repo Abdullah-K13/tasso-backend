@@ -15,27 +15,27 @@ def test_create_patient():
     
     # Sample patient data matching Tasso API format
     patient_payload = {
-        "projectId": "47709ce3-3780-45b4-b050-80f075cdf4ad",
-        "subjectId": "A1001",
-        "firstName": "Terry",
-        "lastName": "Taso",
+        "projectId": "ac4d054b-a9c3-442d-9ce7-0ac19526bcbb",
+        "subjectId": "AUTO-1774322478260-242115439242147-wc9E7AX",
+        "firstName": "Carlos",
+        "lastName": "Madrid",
         "shippingAddress": {
-            "address1": "1631 15th Ave W",
-            "address2": "Suite 105",
-            "city": "Seattle",
-            "district1": "WA",
-            "postalCode": "98119",
+            "address1": "440 Candy Ln",
+            "address2": "Unknown",
+            "city": "Buffalo",
+            "district1": "TX",
+            "postalCode": "75831",
             "country": "US"
         },
         "contactInformation": {
-            "email": "terryt@tassoinc.com",
-            "phoneNumber": "12124567890"
+            "email": "'madridcarlosluis8@gmail.com",
+            "phoneNumber": "14073166374"
         },
-        "dateOfBirth": "1988-01-25",
-        "gender": "cisFemale",
-        "assignedSex": "female",
-        "race": "American Indian or Alaska Native",
-        "smsConsent": True
+        "dateOfBirth": "1996-06-27",
+        "gender": "cisMale",
+        "assignedSex": "male",
+        "race": "Other",
+        "smsConsent": False
     }
     
     try:
