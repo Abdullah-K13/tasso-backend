@@ -560,15 +560,13 @@ async def jotform_webhook_with_order(request: Request):
             state_code = "Unknown"
 
         normalized_address = {
-            "line1": address1,
+            "address1": address1,
+            "address2": address2 if address2 else "Unknown",
             "city": city,
-            "state": state_code,
+            "district1": state_code,
             "postalCode": postal,
-            "countryCode": "US",
+            "country": "US",
         }
-        # Only include line2 if the patient actually provided it
-        if address2:
-            normalized_address["line2"] = address2
 
         # ── Gender / Sex ─────────────────────────────────────────────────
         tasso_gender, tasso_sex = normalize_gender(data.get("q15_gender", ""))
@@ -580,21 +578,20 @@ async def jotform_webhook_with_order(request: Request):
         safe_id = data.get("event_id", "unknown").replace("_", "-")
 
         # ── Build patient payload ─────────────────────────────────────────
-        # Field names match the Tasso Care API spec exactly.
-        # Unknown fields are silently ignored by Tasso, so wrong names = data never reaches them.
+        contact = {"email": email} if email else {}
+        if formatted_phone:
+            contact["phoneNumber"] = formatted_phone
+
         patient_payload = {
             "projectId": project_id,
             "subjectId": "AUTO-" + safe_id,
             "firstName": first_name,
             "lastName": last_name,
-            "address": normalized_address,
-            "contactInfo": {
-                "email": email,
-                "phone": formatted_phone,
-            } if email or formatted_phone else {},
+            "shippingAddress": normalized_address,
+            "contactInformation": contact,
             "dateOfBirth": date_of_birth,
             "gender": tasso_gender,
-            "sexAtBirth": tasso_sex,
+            "assignedSex": tasso_sex,
             "race": tasso_race,
             "smsConsent": False,
         }
