@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\abdul\\\\OneDrive\\\\Desktop\\\\Personal Git\\\\tasso-jotform-backend\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "WebFetch(domain:docs.ramorra.com)",
+      "Bash(curl -s \"https://docs.ramorra.com/\")",
+      "Bash(grep -E \"\\\\.py$|\\\\.md$|\\\\.txt$|\\\\.yml$|\\\\.yaml$\")",
+      "Bash(curl -s \"https://docs.ramorra.com/api\")",
+      "Bash(curl -s \"https://docs.ramorra.com/openapi.json\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3)"
+    ]
+  }
+}
